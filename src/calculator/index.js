@@ -2,6 +2,7 @@ import express from "express";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import uniqid from "uniqid";
 
 import {
   differenceInMonths,
@@ -14,24 +15,6 @@ import { body, validationResult } from "express-validator";
 
 const router = express.Router();
 
-const getOffsetPerMonth = (num_trees, purchaseDate, endDate) => {
-  const months = eachMonthOfInterval({
-    start: purchaseDate,
-    end: endDate,
-  });
-
-  const result = months.map((month, index) => {
-    const year = index / 12;
-
-    const offsetPerTree = year < 6 ? (28.5 / 72) * index : 28.5;
-    console.log(offsetPerTree);
-    const totalOffset = offsetPerTree * num_trees;
-    return { month: month, totalOffset: totalOffset.toFixed(2) };
-  });
-
-  return result;
-};
-
 // relative path to present working directory
 const filename = fileURLToPath(import.meta.url);
 
@@ -43,18 +26,10 @@ const getInitialData = () => {
   const buf = fs.readFileSync(relativePathOfDataJSON);
   return JSON.parse(buf.toString());
 };
-
+// CONSIDER SUMMING ALL PURCHASES OFFSET ARRAYS TOGETHER WHERE DATES ARE EQUAL AND WHERE THEY ARE NOT EXTEND THE LENGTH OF THE ARRAY
 router.get("/", (req, res, next) => {
   try {
     const tableData = getInitialData();
-
-    // TODO CONSIDER SUMMING ALL PURCHASES OFFSET ARRAYS TOGETHER WHERE DATES ARE EQUAL AND WHERE THEY ARE NOT EXTEND THE LENGTH OF THE ARRAY
-    // console.log(tableData);
-    // let offSet
-    // tableData.map((purchase) => {
-    //     purchase.offsetPerMonth
-    // })
-
     res.send({ data: tableData });
   } catch (error) {
     next(error);
@@ -78,7 +53,6 @@ router.get("/totalTime", async (req, res, next) => {
 
 router.post(
   "/",
-  body("id").exists().isInt(),
   body("date").exists().isString(),
   body("num_trees").exists().isInt(),
 
@@ -94,24 +68,16 @@ router.post(
       } else {
         const currentTable = getInitialData();
         console.log(req.body);
-        const purchaseDate = parseISO(req.body.date);
 
         const trees = req.body.num_trees;
 
         const upfrontCost = trees * 120;
         const annualCost = trees * 12;
 
-        const dates = currentTable.map((row) => {
-          return row.date;
-        });
-
-        dates.sort((a, b) => new Date(a) - new Date(b));
-        // TODO CONSIDER SETTING EVERY START OF THE ARRAY AT THE EARLIEST START DATE OF EVERY ENTRY (dates[0])
-        const endDate = addYears(parseISO(dates[dates.length - 1]), 2);
-        console.log(trees, purchaseDate, endDate);
-
-        const totalOffset = getOffsetPerMonth(trees, purchaseDate, endDate);
-        const newRow = await { ...req.body, offsetPerMonth: totalOffset };
+        const newRow = await {
+          ...req.body,
+          id: uniqid(),
+        };
 
         await currentTable.push(newRow);
 

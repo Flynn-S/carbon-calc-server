@@ -16,7 +16,7 @@ import {
 const server = express();
 
 // port usually from .env variables
-const port = 5000;
+const PORT = process.env.PORT || 5000;
 
 const loggerMiddleware = (req, res, next) => {
   console.log(`Request method: ${req.method} ${req.url} -- ${new Date()}`);
@@ -37,6 +37,10 @@ server.use(forbiddenErrorHandler);
 server.use(catchAllErrorHandler);
 
 console.log(listEndpoints(server));
-server.listen(port, () => {
-  console.log("Server is running on port ", port);
+server.listen(PORT, "0.0.0.0", () => {
+  if (import.meta.env.PROD) {
+    console.log(`Server running on cloud on port: ${PORT}`);
+  } else {
+    console.log(`Server running locally on port: ${PORT}`);
+  }
 });

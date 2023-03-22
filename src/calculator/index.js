@@ -26,7 +26,7 @@ const getInitialData = () => {
   const buf = fs.readFileSync(relativePathOfDataJSON);
   return JSON.parse(buf.toString());
 };
-// CONSIDER SUMMING ALL PURCHASES OFFSET ARRAYS TOGETHER WHERE DATES ARE EQUAL AND WHERE THEY ARE NOT EXTEND THE LENGTH OF THE ARRAY
+
 router.get("/", (req, res, next) => {
   try {
     const tableData = getInitialData();
@@ -34,21 +34,6 @@ router.get("/", (req, res, next) => {
   } catch (error) {
     next(error);
   }
-});
-
-router.get("/totalTime", async (req, res, next) => {
-  const currentTable = getInitialData();
-  const dates = currentTable.map((row) => row.date);
-  await dates.sort((a, b) => new Date(a) - new Date(b));
-
-  const monthsDiff = differenceInMonths(
-    parseISO(dates[0]),
-    parseISO(dates[dates.length - 1])
-  );
-
-  console.log(monthsDiff);
-
-  return monthsDiff;
 });
 
 router.post(
@@ -145,7 +130,7 @@ router.delete("/:id", async (req, res, next) => {
     );
     res.status(204).send("deletion successful");
   } catch (error) {
-    console.log(error);
+    next(error);
   }
 });
 

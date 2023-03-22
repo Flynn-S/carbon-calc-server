@@ -38,7 +38,7 @@ server.use(catchAllErrorHandler);
 
 console.log(listEndpoints(server));
 server.listen(PORT, "0.0.0.0", () => {
-  if (import.meta.env.PROD) {
+  if (process.env.NODE_ENV === "production") {
     console.log(`Server running on cloud on port: ${PORT}`);
   } else {
     console.log(`Server running locally on port: ${PORT}`);
